@@ -5,13 +5,9 @@ from flask import Flask, redirect, render_template, request, send_from_directory
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
-from azure.storage.blob import BlobServiceClient, ContentSettings
-from werkzeug.utils import secure_filename
 
-AZURE_STORAGE_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=csb10032000d733470a;AccountKey=7xF+CGBtqhNfWAoBCPQrp3cyp+qsDH+moJ9Np00KFNpkslSMNbuYW+/VzdHdxGdoZwMrDNgU5sKq+AStdVUzBQ==;EndpointSuffix=core.windows.net"
-CONTAINER_NAME = "Items"
 
-blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
+
 
 app = Flask(__name__, static_folder='static')
 csrf = CSRFProtect(app)
@@ -86,25 +82,19 @@ def add_review(id):
         user_name = request.values.get('user_name')
         rating = request.values.get('rating')
         review_text = request.values.get('review_text')
-        customer_image = request.files['customer_image']
     except (KeyError):
         #Redisplay the question voting form.
         return render_template('add_review.html', {
             'error_message': "Error adding review",
         })
     else:
-        filename = secure_filename(customer_image.filename)
-        blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=filename)
-        
-        with customer_image.stream as data:
-            blob_client.upload_blob(data, content_settings=ContentSettings(content_type=customer_image.content_type))
         review = Review()
         review.restaurant = id
         review.review_date = datetime.now()
         review.user_name = user_name
         review.rating = int(rating)
         review.review_text = review_text
-        review.image_url = blob_client.url
+
         db.session.add(review)
         db.session.commit()
 
