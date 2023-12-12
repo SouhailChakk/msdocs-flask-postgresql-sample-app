@@ -20,8 +20,11 @@ class Review(db.Model):
     restaurant = Column(Integer, ForeignKey('restaurant.id', ondelete="CASCADE"))
     user_name = Column(String(30))
     rating = Column(Integer)
+    image_url = Column(String(255))  
+    image_filename = Column(String(255))
     review_text = Column(String(500))
     review_date = Column(DateTime)
+    
 
     @validates('rating')
     def validate_rating(self, key, value):
