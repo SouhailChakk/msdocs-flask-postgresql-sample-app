@@ -5,9 +5,7 @@ from flask import Flask, redirect, render_template, request, send_from_directory
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
-import os
-from azure.storage.blob import BlobServiceClient
-from werkzeug.utils import secure_filename
+
 
 
 
@@ -17,17 +15,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__, static_folder='static')
 csrf = CSRFProtect(app)
 
-connect_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING') 
-container_name = "blobstorage"
 
-blob_service_client = BlobServiceClient.from_connection_string(conn_str=connect_str) # create a blob service client to interact with the storage account
-try:
-    container_client = blob_service_client.get_container_client(container=container_name) # get container client to interact with the container in which images will be stored
-    container_client.get_container_properties() # get properties of the container to force exception to be thrown if container does not exist
-except Exception as e:
-    print(e)
-    print("Creating container...")
-    container_client = blob_service_client.create_container(container_name)
 
 # WEBSITE_HOSTNAME exists only in production environment
 if 'WEBSITE_HOSTNAME' not in os.environ:
