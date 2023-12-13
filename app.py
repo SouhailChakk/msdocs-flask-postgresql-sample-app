@@ -13,6 +13,7 @@ from werkzeug.utils import secure_filename
 
 
 
+
 app = Flask(__name__, static_folder='static')
 csrf = CSRFProtect(app)
 
