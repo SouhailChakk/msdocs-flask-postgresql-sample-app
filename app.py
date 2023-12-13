@@ -5,12 +5,26 @@ from flask import Flask, redirect, render_template, request, send_from_directory
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
+import os
+from azure.storage.blob import BlobServiceClient
 
 
 
 
 app = Flask(__name__, static_folder='static')
 csrf = CSRFProtect(app)
+
+connect_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING') 
+container_name = "blobstorage"
+
+blob_service_client = BlobServiceClient.from_connection_string(conn_str=connect_str) # create a blob service client to interact with the storage account
+try:
+    container_client = blob_service_client.get_container_client(container=container_name) # get container client to interact with the container in which images will be stored
+    container_client.get_container_properties() # get properties of the container to force exception to be thrown if container does not exist
+except Exception as e:
+    print(e)
+    print("Creating container...")
+    container_client = blob_service_client.create_container(container_name)
 
 # WEBSITE_HOSTNAME exists only in production environment
 if 'WEBSITE_HOSTNAME' not in os.environ:
@@ -82,11 +96,19 @@ def add_review(id):
         user_name = request.values.get('user_name')
         rating = request.values.get('rating')
         review_text = request.values.get('review_text')
+        customer_image = request.files['customer_image']
     except (KeyError):
         #Redisplay the question voting form.
         return render_template('add_review.html', {
             'error_message': "Error adding review",
         })
+    if customer_image:
+        # Save image to Azure Blob Storage
+        filename = secure_filename(customer_image.filename)
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=filename)
+
+        with customer_image.stream as data:
+            blob_client.upload_blob(data, overwrite=True)
     else:
         review = Review()
         review.restaurant = id
@@ -94,6 +116,7 @@ def add_review(id):
         review.user_name = user_name
         review.rating = int(rating)
         review.review_text = review_text
+        review.image_url = blob_client.url
 
         db.session.add(review)
         db.session.commit()
