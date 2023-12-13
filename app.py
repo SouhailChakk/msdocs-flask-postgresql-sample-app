@@ -87,19 +87,12 @@ def add_review(id):
         user_name = request.values.get('user_name')
         rating = request.values.get('rating')
         review_text = request.values.get('review_text')
-        customer_image = request.files['customer_image']
     except (KeyError):
         #Redisplay the question voting form.
         return render_template('add_review.html', {
             'error_message': "Error adding review",
         })
-    if customer_image:
-        # Save image to Azure Blob Storage
-        filename = secure_filename(customer_image.filename)
-        blob_client = blob_service_client.get_blob_client(container=container_name, blob=filename)
 
-        with customer_image.stream as data:
-            blob_client.upload_blob(data, overwrite=True)
     else:
         review = Review()
         review.restaurant = id
@@ -107,7 +100,7 @@ def add_review(id):
         review.user_name = user_name
         review.rating = int(rating)
         review.review_text = review_text
-        review.image_url = blob_client.url
+     
 
         db.session.add(review)
         db.session.commit()
