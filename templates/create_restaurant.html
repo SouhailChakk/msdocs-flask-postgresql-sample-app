@@ -25,6 +25,16 @@
             <label for="description" class="form-label">Description</label>
             <input type="text" class="form-control" id="description" name="description">
         </div>
+          <div class="mb-3">
+                     <!-- Add this form to details.html -->
+                      <form action="{{ url_for('app2.upload_image', id=restaurant.id) }}" method="post" enctype="multipart/form-data">
+                      <label for="customer_image">Upload Image:</label>
+                      <input type="file" name="customer_image" accept=".jpg, .png, .jpeg">
+                   </form>
+
+    <button type="submit" class="btn btn-primary">Submit image</button>
+</form>
+                  </div>
         <button type="submit" class="btn btn-primary">Submit</button>
         <button type="cancel" class="btn btn-primary">Cancel</button>
     </form>
