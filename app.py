@@ -128,4 +128,5 @@ def favicon():
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
+
