@@ -104,7 +104,10 @@
                       <input type="text" class="form-control" id="review_text" name="review_text">
                   </div>
 
-                  <div class="mb-3">
+              
+              </div>
+
+                      <div class="mb-3">
                      <!-- Add this form to details.html -->
                       <form action="{{ url_for('app2.upload_image', id=restaurant.id) }}" method="post" enctype="multipart/form-data">
                       <label for="customer_image">Upload Image:</label>
@@ -114,7 +117,6 @@
     <button type="submit" class="btn btn-primary">Submit image</button>
 </form>
                   </div>
-              </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="submit" class="btn btn-primary">Save changes</button>
