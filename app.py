@@ -1,5 +1,7 @@
 import os
 from datetime import datetime
+from flask import Flask
+from app2 import app2_bp
 
 from flask import Flask, redirect, render_template, request, send_from_directory, url_for
 from flask_migrate import Migrate
@@ -8,12 +10,9 @@ from flask_wtf.csrf import CSRFProtect
 
 
 
-
-
-
-
 app = Flask(__name__, static_folder='static')
 csrf = CSRFProtect(app)
+
 
 
 
@@ -37,6 +36,8 @@ db = SQLAlchemy(app)
 
 # Enable Flask-Migrate commands "flask db init/migrate/upgrade" to work
 migrate = Migrate(app, db)
+
+app.register_blueprint(app2_bp, url_prefix='/app2')
 
 # The import must be done after db initialization due to circular import issue
 from models import Restaurant, Review
