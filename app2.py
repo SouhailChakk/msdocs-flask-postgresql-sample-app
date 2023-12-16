@@ -1,57 +1,56 @@
-# app2.py
-
-import os
-from flask import Blueprint, request, redirect, url_for, render_template
+from flask import Flask, Blueprint, render_template, request, redirect, url_for
 from flask_wtf.csrf import CSRFProtect
-from flask_migrate import Migrate
+from azure.identity import ClientSecretCredential
 from azure.storage.blob import BlobServiceClient
-from datetime import datetime
-from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+
+client_id = os.environ['AZURE_CLIENT_ID']
+client_secret = os.environ['AZURE_CLIENT_SECRET']
+account_url = os.environ["https://csb10032000d733470a.blob.core.windows.net/"]
+
+# create a credential 
+credentials = ClientSecretCredential(
+    client_id=client_id,
+    client_secret=client_secret,
+)
 
 app2_bp = Blueprint('app2', __name__)
-csrf = CSRFProtect()
-
-# Connect to Azure Storage Blob
-connect_str = os.getenv('DefaultEndpointsProtocol=https;AccountName=csb10032000d733470a;AccountKey=7xF+CGBtqhNfWAoBCPQrp3cyp+qsDH+moJ9Np00KFNpkslSMNbuYW+/VzdHdxGdoZwMrDNgU5sKq+AStdVUzBQ==;EndpointSuffix=core.windows.net') 
-container_name = "blobstorage"
-blob_service_client = BlobServiceClient.from_connection_string(conn_str=connect_str)
-
-
-
-try:
-    container_client = blob_service_client.get_container_client(container=container_name)
-    container_client.get_container_properties()
-except Exception as e:
-    print(e)
-    print("Creating container...")
-    container_client = blob_service_client.create_container(container_name)
+csrf = CSRFProtect(app2_bp)
 
 @csrf.exempt
-@app2_bp.route('/upload_image/<int:id>', methods=['POST'])
-def upload_image(id):
-    # Ensure the 'customer_image' file is part of the form
-    if 'customer_image' not in request.files:
-        # Handle the case where no file is selected
-        return redirect(url_for('app.details', id=id))
+@app2_bp.route('/upload_blob', methods=['POST'])
+def upload_blob():
+    local_dir = "static"
+    container_name = 'csb10032000d733470a'
 
-    file = request.files['customer_image']
+    # set client to access azure storage container
+    blob_service_client = BlobServiceClient(account_url=account_url, credential=credentials)
 
-    # Handle the case where the user submits an empty form
-    if file.filename == '':
-        return redirect(url_for('app.details', id=id))
+    # get the container client
+    container_client = blob_service_client.get_container_client(container=container_name)
 
-    # Save the file to blob storage
-    save_image_to_blob(file, id)
+    # read all files from directory
+    filenames = os.listdir(local_dir)
 
-    return redirect(url_for('app.details', id=id))
+    for filename in filenames:
+        # get full file path
+        full_file_path = os.path.join(local_dir, filename)
 
-def save_image_to_blob(file, restaurant_id):
-    # Save the file to blob storage using the appropriate method
-    # (you need to adapt this part based on your blob storage setup)
-    filename = secure_filename(file.filename)  # Make sure to import secure_filename
-    blob_client = container_client.get_blob_client(filename)
+        # read files and upload data to blob storage container
+        with open(full_file_path, "r") as fl:
+            data = fl.read()
+            container_client.upload_blob(name=filename, data=data)
 
-    # Upload the file to blob storage
-    with file.stream as data:
-        blob_client.upload_blob(data, overwrite=True)
+    return redirect(url_for('index'))  # Assuming you have an 'index' route in your app
+
+# Register the blueprint in your main app.py
+from app2 import app2_bp
+
+app.register_blueprint(app2_bp, url_prefix='/app2')
+
+# main
+if __name__ == "__main__":
+    upload_blob()
