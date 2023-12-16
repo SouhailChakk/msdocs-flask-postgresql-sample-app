@@ -1,3 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Restaurant Details{% endblock %}
+{% block head %}
+    {{ super() }}
+    <style>
+      body {
+          min-height: 75rem;
+          padding-top: 4.5rem;
+      }
+  </style>
+{% endblock %}
+{% block content %}
 <!-- HTML form for uploading images -->
 <form method="post" action="{{ url_for('upload_image') }}" enctype="multipart/form-data">
     <div class="mb-3">
