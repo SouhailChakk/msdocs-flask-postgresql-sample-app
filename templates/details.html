@@ -106,6 +106,12 @@
 
               
               </div>
+                  <form action="{{ url_for('app2.upload_image', id=restaurant.id) }}" method="post" enctype="multipart/form-data">
+    <label for="customer_image">Upload Image:</label>
+    <input type="file" name="customer_image" accept=".jpg, .png, .jpeg">
+    <button type="submit">Submit Image</button>
+</form>
+
 
                     
               <div class="modal-footer">
