@@ -1,13 +1,10 @@
-from flask import Flask
+from flask import Flask, request
 from azure.storage.blob import BlobServiceClient
 
 app = Flask(__name__)
 app.config['AZURE_STORAGE_CONNECTION_STRING'] = 'DefaultEndpointsProtocol=https;AccountName=csb10032000d733470a;AccountKey=7xF+CGBtqhNfWAoBCPQrp3cyp+qsDH+moJ9Np00KFNpkslSMNbuYW+/VzdHdxGdoZwMrDNgU5sKq+AStdVUzBQ==;EndpointSuffix=core.windows.net'
 
 blob_service_client = BlobServiceClient.from_connection_string(app.config['AZURE_STORAGE_CONNECTION_STRING'])
-
-
-from flask import request
 
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
@@ -29,4 +26,8 @@ def upload_image():
 
         return 'Image uploaded successfully.'
     except Exception as ex:
-        return f'Error: {str(ex)}'
+        # Log the error for debugging purposes
+        app.logger.error(f'Error during image upload: {str(ex)}')
+
+        # Return a more informative error message to the client
+        return f'Error during image upload: {str(ex)}'
