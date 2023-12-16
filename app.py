@@ -35,6 +35,7 @@ migrate = Migrate(app, db)
 
 # The import must be done after db initialization due to circular import issue
 from models import Restaurant, Review
+from app2 import upload_image
 
 
 @app.route('/', methods=['GET'])
