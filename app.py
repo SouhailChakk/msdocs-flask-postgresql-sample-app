@@ -5,13 +5,10 @@ from flask import Flask, redirect, render_template, request, send_from_directory
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
-from azure.storage.blob import BlobServiceClient
 
 
 app = Flask(__name__, static_folder='static')
 csrf = CSRFProtect(app)
-
-
 
 # WEBSITE_HOSTNAME exists only in production environment
 if 'WEBSITE_HOSTNAME' not in os.environ:
@@ -36,12 +33,6 @@ migrate = Migrate(app, db)
 
 # The import must be done after db initialization due to circular import issue
 from models import Restaurant, Review
-
-# Initialize the Azure Blob Storage client
-AZURE_STORAGE_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=blolbcontainer;AccountKey=PLwcTYeojwwpUGEaDMJ3oHQ0dS5TJKvyJpyEAD1MBiLYf8qf82CvLCvknzWxvYIsbojEJaWbV4NN+AStxNiJxw==;EndpointSuffix=core.windows.net"
-blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
-
-
 
 @app.route('/', methods=['GET'])
 def index():
@@ -105,35 +96,6 @@ def add_review(id):
         db.session.commit()
 
     return redirect(url_for('details', id=id))
-
-@app.route('/upload_image/<int:id>', methods=['POST'])
-def upload_image(id):
-    try:
-        customer_image = request.files['customer_image']
-        restaurant_id = id
-
-        container_name = 'blobstorage'
-        container_client = blob_service_client.get_container_client(container_name)
-
-        blob_name = f'review_images/{restaurant_id}_{customer_image.filename}'
-        blob_client = container_client.get_blob_client(blob_name)
-        blob_client.upload_blob(customer_image)
-
-        save_image_reference_to_database(restaurant_id, blob_name)
-
-        return redirect(url_for('details', id=id))  # Redirect back to the details page
-    except Exception as ex:
-        return f'Error: {str(ex)}'
-
-
-@app.route('/<int:id>', methods=['GET'])
-def details(id):
-    # Existing details route logic
-    restaurant = Restaurant.query.where(Restaurant.id == id).first()
-    reviews = Review.query.where(Review.restaurant == id)
-    return render_template('details.html', restaurant=restaurant, reviews=reviews)
-
-
 
 @app.context_processor
 def utility_processor():
