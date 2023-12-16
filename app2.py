@@ -1,11 +1,11 @@
 from flask import Flask, request
 from azure.storage.blob import BlobServiceClient
 
-app = Flask(__name__)
-csrf = CSRFProtect(app)
-app.config['AZURE_STORAGE_CONNECTION_STRING'] = 'DefaultEndpointsProtocol=https;AccountName=blolbcontainer;AccountKey=PLwcTYeojwwpUGEaDMJ3oHQ0dS5TJKvyJpyEAD1MBiLYf8qf82CvLCvknzWxvYIsbojEJaWbV4NN+AStxNiJxw==;EndpointSuffix=core.windows.net'
+app2 = Flask(__name__)
+csrf = CSRFProtect(app2)
+app2.config['AZURE_STORAGE_CONNECTION_STRING'] = 'DefaultEndpointsProtocol=https;AccountName=blolbcontainer;AccountKey=PLwcTYeojwwpUGEaDMJ3oHQ0dS5TJKvyJpyEAD1MBiLYf8qf82CvLCvknzWxvYIsbojEJaWbV4NN+AStxNiJxw==;EndpointSuffix=core.windows.net'
 
-blob_service_client = BlobServiceClient.from_connection_string(app.config['AZURE_STORAGE_CONNECTION_STRING'])
+blob_service_client = BlobServiceClient.from_connection_string(app2.config['AZURE_STORAGE_CONNECTION_STRING'])
 
 
 
@@ -13,11 +13,11 @@ blob_service_client = BlobServiceClient.from_connection_string(app.config['AZURE
 if 'WEBSITE_HOSTNAME' not in os.environ:
     # local development, where we'll use environment variables
     print("Loading config.development and environment variables from .env file.")
-    app.config.from_object('azureproject.development')
+    app2.config.from_object('azureproject.development')
 else:
     # production
     print("Loading config.production.")
-    app.config.from_object('azureproject.production')
+    app2.config.from_object('azureproject.production')
 
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
@@ -47,8 +47,8 @@ def upload_image():
 
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
+    return send_from_directory(os.path.join(app2.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 if __name__ == '__main__':
-    app.run()
+    app2.run()
