@@ -85,25 +85,36 @@ def add_review(id):
         user_name = request.values.get('user_name')
         rating = request.values.get('rating')
         review_text = request.values.get('review_text')
-    except (KeyError):
-        #Redisplay the question voting form.
+        customer_image = request.files['customer_image']
+    except KeyError:
+        # Redisplay the question voting form.
         return render_template('add_review.html', {
             'error_message': "Error adding review",
         })
 
-    else:
+    try:
+        # Upload the image to Azure Blob Storage
+        if not upload_image(id, customer_image):
+            return render_template('add_review.html', {
+                'error_message': "Error uploading image to Azure Blob Storage",
+            })
+
+        # Create and save the review
         review = Review()
         review.restaurant = id
         review.review_date = datetime.now()
         review.user_name = user_name
         review.rating = int(rating)
         review.review_text = review_text
-     
 
         db.session.add(review)
         db.session.commit()
 
-    return redirect(url_for('details', id=id))
+        return redirect(url_for('details', id=id))
+    except Exception as ex:
+        return render_template('add_review.html', {
+            'error_message': f"Error: {str(ex)}",
+        })
 
 @app.context_processor
 def utility_processor():
