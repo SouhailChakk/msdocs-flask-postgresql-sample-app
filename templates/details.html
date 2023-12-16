@@ -114,17 +114,6 @@
 
                     
               <div class="modal-footer">
-
-                  <!-- HTML form for submitting restaurant reviews with image upload -->
-<form method="post" action="{{ url_for('add_review', id=restaurant.id) }}" enctype="multipart/form-data">
-    <!-- Other review input fields -->
-    <div class="mb-3">
-        <label for="customer_image" class="form-label">Customer Image:</label>
-        <input type="file" class="form-control" id="customer_image" name="customer_image" accept=".png, .jpg, .jpeg">
-    </div>
-    <button type="submit" class="btn btn-primary">Submit Image</button>
-</form>
-
 <!-- Button to navigate to the image upload page -->
 <a href="{{ url_for('image_upload_page') }}" class="btn btn-secondary">Add Image</a>
 
