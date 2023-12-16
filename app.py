@@ -10,6 +10,8 @@ from flask_wtf.csrf import CSRFProtect
 app = Flask(__name__, static_folder='static')
 csrf = CSRFProtect(app)
 
+
+
 # WEBSITE_HOSTNAME exists only in production environment
 if 'WEBSITE_HOSTNAME' not in os.environ:
     # local development, where we'll use environment variables
@@ -33,6 +35,8 @@ migrate = Migrate(app, db)
 
 # The import must be done after db initialization due to circular import issue
 from models import Restaurant, Review
+from app2 import upload_image
+
 
 @app.route('/', methods=['GET'])
 def index():
