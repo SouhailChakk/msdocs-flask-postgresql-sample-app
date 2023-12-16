@@ -7,14 +7,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 
 
-
 app = Flask(__name__, static_folder='static')
 csrf = CSRFProtect(app)
-
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB
-
-
-
 
 # WEBSITE_HOSTNAME exists only in production environment
 if 'WEBSITE_HOSTNAME' not in os.environ:
@@ -36,7 +30,6 @@ db = SQLAlchemy(app)
 
 # Enable Flask-Migrate commands "flask db init/migrate/upgrade" to work
 migrate = Migrate(app, db)
-
 
 # The import must be done after db initialization due to circular import issue
 from models import Restaurant, Review
@@ -87,36 +80,22 @@ def add_review(id):
         user_name = request.values.get('user_name')
         rating = request.values.get('rating')
         review_text = request.values.get('review_text')
-        customer_image = request.files['customer_image']
-    except KeyError:
-        # Redisplay the question voting form.
+    except (KeyError):
+        #Redisplay the question voting form.
         return render_template('add_review.html', {
             'error_message': "Error adding review",
         })
-
-    try:
-        # Upload the image to Azure Blob Storage
-        if not upload_image(id, customer_image):
-            return render_template('add_review.html', {
-                'error_message': "Error uploading image to Azure Blob Storage",
-            })
-
-        # Create and save the review
+    else:
         review = Review()
         review.restaurant = id
         review.review_date = datetime.now()
         review.user_name = user_name
         review.rating = int(rating)
         review.review_text = review_text
-
         db.session.add(review)
         db.session.commit()
 
-        return redirect(url_for('details', id=id))
-    except Exception as ex:
-        return render_template('add_review.html', {
-            'error_message': f"Error: {str(ex)}",
-        })
+    return redirect(url_for('details', id=id))
 
 @app.context_processor
 def utility_processor():
@@ -141,5 +120,4 @@ def favicon():
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
+    app.run()
