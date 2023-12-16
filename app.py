@@ -106,31 +106,33 @@ def add_review(id):
 
     return redirect(url_for('details', id=id))
 
-@app.route('/<int:id>', methods=['GET', 'POST'])
-def add_image(id):
-    if request.method == 'POST':
-        # Handle image upload
-        try:
-            customer_image = request.files['customer_image']
-            restaurant_id = id
+@app.route('/upload_image/<int:id>', methods=['POST'])
+def upload_image(id):
+    try:
+        customer_image = request.files['customer_image']
+        restaurant_id = id
 
-            container_name = 'blobstorage'
-            container_client = blob_service_client.get_container_client(container_name)
+        container_name = 'blobstorage'
+        container_client = blob_service_client.get_container_client(container_name)
 
-            blob_name = f'review_images/{restaurant_id}_{customer_image.filename}'
-            blob_client = container_client.get_blob_client(blob_name)
-            blob_client.upload_blob(customer_image)
+        blob_name = f'review_images/{restaurant_id}_{customer_image.filename}'
+        blob_client = container_client.get_blob_client(blob_name)
+        blob_client.upload_blob(customer_image)
 
-            save_image_reference_to_database(restaurant_id, blob_name)
+        save_image_reference_to_database(restaurant_id, blob_name)
 
-            return redirect(url_for('add_image', id=id))  # Redirect back to the details page
-        except Exception as ex:
-            return f'Error: {str(ex)}'
+        return redirect(url_for('details', id=id))  # Redirect back to the details page
+    except Exception as ex:
+        return f'Error: {str(ex)}'
 
+
+@app.route('/<int:id>', methods=['GET'])
+def details(id):
     # Existing details route logic
     restaurant = Restaurant.query.where(Restaurant.id == id).first()
     reviews = Review.query.where(Review.restaurant == id)
     return render_template('details.html', restaurant=restaurant, reviews=reviews)
+
 
 
 @app.context_processor
