@@ -1,56 +1,37 @@
-from flask import Flask, Blueprint, render_template, request, redirect, url_for
-from flask_wtf.csrf import CSRFProtect
-from azure.identity import ClientSecretCredential
-from azure.storage.blob import BlobServiceClient
-from dotenv import load_dotenv
-import os
+import os, uuid
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 
-load_dotenv()
+try:
+    print("Azure Blob storage v12 - Python quickstart sample")
+    # Quick start code goes here
+except Exception as ex:
+    print('Exception:')
+    print(ex)
 
-client_id = os.environ['AZURE_CLIENT_ID']
-client_secret = os.environ['AZURE_CLIENT_SECRET']
-account_url = os.environ["https://csb10032000d733470a.blob.core.windows.net/"]
+connect_str = "DefaultEndpointsProtocol=https;AccountName=csb10032000d733470a;AccountKey=7xF+CGBtqhNfWAoBCPQrp3cyp+qsDH+moJ9Np00KFNpkslSMNbuYW+/VzdHdxGdoZwMrDNgU5sKq+AStdVUzBQ==;EndpointSuffix=core.windows.net"
+blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
-# create a credential 
-credentials = ClientSecretCredential(
-    client_id=client_id,
-    client_secret=client_secret,
-)
+container_name = 'csb10032000d733470a'
+container_client = blob_service_client.get_container_client(container_name)
 
-app2_bp = Blueprint('app2', __name__)
-csrf = CSRFProtect(app2_bp)
+# List the blobs in the container
+print("\nListing blobs...")
+blob_list = container_client.list_blobs()
+for blob in blob_list:
+    print("\t" + blob.name)
 
-@csrf.exempt
-@app2_bp.route('/upload_blob', methods=['POST'])
-def upload_blob():
-    local_dir = "static"
-    container_name = 'csb10032000d733470a'
+def upload_image(id, customer_image):
+    try:
+        # Create a container client
+        container_name = 'csb10032000d733470a'
+        container_client = blob_service_client.get_container_client(container_name)
 
-    # set client to access azure storage container
-    blob_service_client = BlobServiceClient(account_url=account_url, credential=credentials)
+        # Upload the image to Azure Blob Storage
+        blob_name = f'review_images/{id}_{customer_image.filename}'
+        blob_client = container_client.get_blob_client(blob_name)
+        blob_client.upload_blob(customer_image)
 
-    # get the container client
-    container_client = blob_service_client.get_container_client(container=container_name)
-
-    # read all files from directory
-    filenames = os.listdir(local_dir)
-
-    for filename in filenames:
-        # get full file path
-        full_file_path = os.path.join(local_dir, filename)
-
-        # read files and upload data to blob storage container
-        with open(full_file_path, "r") as fl:
-            data = fl.read()
-            container_client.upload_blob(name=filename, data=data)
-
-    return redirect(url_for('index'))  # Assuming you have an 'index' route in your app
-
-# Register the blueprint in your main app.py
-from app2 import app2_bp
-
-app.register_blueprint(app2_bp, url_prefix='/app2')
-
-# main
-if __name__ == "__main__":
-    upload_blob()
+        return True
+    except Exception as ex:
+        print(f'Error: {str(ex)}')
+        return False
