@@ -104,6 +104,8 @@
                       <input type="text" class="form-control" id="review_text" name="review_text">
                   </div>
 
+              </div>
+
                   <form method="post" action="{{ url_for('upload_image') }}" enctype="multipart/form-data">
     <!-- Other review input fields -->
     <div class="mb-3">
@@ -113,9 +115,6 @@
     <input type="hidden" name="restaurant_id" value="{{ restaurant.id }}">
     <button type="submit" class="btn btn-primary">Submit Image</button>
 </form>
-
-              
-              </div>
                   
 
 
