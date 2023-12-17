@@ -5,10 +5,12 @@ from flask import Flask, redirect, render_template, request, send_from_directory
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
+from azure.storage.blob import BlobServiceClient
 
 
 app = Flask(__name__, static_folder='static')
 csrf = CSRFProtect(app)
+
 
 # WEBSITE_HOSTNAME exists only in production environment
 if 'WEBSITE_HOSTNAME' not in os.environ:
@@ -73,6 +75,9 @@ def add_restaurant():
 
         return redirect(url_for('details', id=restaurant.id))
 
+app.config['AZURE_STORAGE_CONNECTION_STRING'] = 'DefaultEndpointsProtocol=https;AccountName=csb10032000d733470a;AccountKey=7xF+CGBtqhNfWAoBCPQrp3cyp+qsDH+moJ9Np00KFNpkslSMNbuYW+/VzdHdxGdoZwMrDNgU5sKq+AStdVUzBQ==;EndpointSuffix=core.windows.net'
+app.config['AZURE_BLOB_CONTAINER_NAME'] = 'blobstorage'
+
 @app.route('/review/<int:id>', methods=['POST'])
 @csrf.exempt
 def add_review(id):
@@ -96,6 +101,35 @@ def add_review(id):
         db.session.commit()
 
     return redirect(url_for('details', id=id))
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload/<int:id>', methods=['POST'])
+def upload_image():
+    try:
+        customer_image = request.files['customer_image']
+
+        if customer_image and allowed_file(customer_image.filename):
+            # Save the image to Azure Blob Storage
+            container_client = blob_service_client.get_container_client(app.config['AZURE_BLOB_CONTAINER_NAME'])
+            blob_name = f'review_images/{datetime.now().strftime("%Y%m%d%H%M%S")}_{secure_filename(customer_image.filename)}'
+            blob_client = container_client.get_blob_client(blob_name)
+            with customer_image.stream as data:
+                blob_client.upload_blob(data)
+
+            # Save the image reference in your PostgreSQL database (you need to add this part)
+            # ...
+
+            return 'Image uploaded successfully.'
+        else:
+            return 'Invalid file format.'
+    except Exception as ex:
+        # Log the error for debugging purposes
+        app.logger.error(f'Error during image upload: {str(ex)}')
+        return f'Error during image upload: {str(ex)}'
 
 @app.context_processor
 def utility_processor():
