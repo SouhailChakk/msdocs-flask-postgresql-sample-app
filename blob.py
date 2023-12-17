@@ -1,40 +1,69 @@
-from flask import Flask, request, render_template, redirect, url_for
-from werkzeug.utils import secure_filename
-from azure.storage.blob import BlobServiceClient
-import os
+from flask import Flask, request, redirect
+app = Flask(__name__)  
 
-app = Flask(__name__, static_folder='static', static_url_path='')
+AZURE_STORAGE_CONNECTION_STRING = 'DefaultEndpointsProtocol=https;AccountName=blolbcontainer;AccountKey=PLwcTYeojwwpUGEaDMJ3oHQ0dS5TJKvyJpyEAD1MBiLYf8qf82CvLCvknzWxvYIsbojEJaWbV4NN+AStxNiJxw==;EndpointSuffix=core.windows.net'
+connect_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING') # retrieve the connection string from the environment variable
+container_name = "blobstorage" # container name in which images will be store in the storage account
 
-app.config.from_pyfile('config.py')
-account = app.config['ACCOUNT_NAME']   # Azure account name
-key = app.config['ACCOUNT_KEY']      # Azure Storage account access key  
-connect_str = app.config['CONNECTION_STRING']
-container = app.config['CONTAINER'] # Container name
-allowed_ext = app.config['ALLOWED_EXTENSIONS'] # List of accepted extensions
-max_length = app.config['MAX_CONTENT_LENGTH'] # Maximum size of the uploaded file
+blob_service_client = BlobServiceClient.from_connection_string(conn_str=connect_str) # create a blob service client to interact with the storage account
+try:
+    container_client = blob_service_client.get_container_client(container=container_name) # get container client to interact with the container in which images will be stored
+    container_client.get_container_properties() # get properties of the container to force exception to be thrown if container does not exist
+except Exception as e:
+    container_client = blob_service_client.create_container(container_name)
 
-blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in allowed_ext
 
-@app.route('/upload',methods=['POST'])
-def upload():
-    if request.method == 'POST':
-        img = request.files['file']
-        if img and allowed_file(img.filename):
-            filename = secure_filename(img.filename)
-            img.save(filename)
-            blob_client = blob_service_client.get_blob_client(container = container, blob = filename)
-            with open(filename, "rb") as data:
-                try:
-                    blob_client.upload_blob(data, overwrite=True)
-                    msg = "Upload Done ! "
-                except:
-                    pass
-            os.remove(filename)
-    return render_template("details.html", msg=msg)
+@app.route("/")
+def view_photos():
+    blob_items = container_client.list_blobs() # list all the blobs in the container
 
-if __name__ == "__main__":
-    app.run()
+    img_html = "<div style='display: flex; justify-content: space-between; flex-wrap: wrap;'>"
+
+    for blob in blob_items:
+        blob_client = container_client.get_blob_client(blob=blob.name) # get blob client to interact with the blob and get blob url
+        img_html += "<img src='{}' width='auto' height='200' style='margin: 0.5em 0;'/>".format(blob_client.url) # get the blob url and append it to the html
+    
+    img_html += "</div>"
+
+    # return the html with the images
+    return """
+    <head>
+    <!-- CSS only -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="/">Photos App</a>
+            </div>
+        </nav>
+        <div class="container">
+            <div class="card" style="margin: 1em 0; padding: 1em 0 0 0; align-items: center;">
+                <h3>Upload new File</h3>
+                <div class="form-group">
+                    <form method="post" action="/upload-photos" 
+                        enctype="multipart/form-data">
+                        <div style="display: flex;">
+                            <input type="file" accept=".png, .jpeg, .jpg, .gif" name="photos" multiple class="form-control" style="margin-right: 1em;">
+                            <input type="submit" class="btn btn-primary">
+                        </div>
+                    </form>
+                </div> 
+            </div>
+        
+    """ + img_html + "</div></body>"
+  
+@app.route("/upload-photos", methods=["POST"])
+def upload_photos():
+    filenames = ""
+
+    for file in request.files.getlist("photos"):
+        try:
+            container_client.upload_blob(file.filename, file) # upload the file to the container using the filename as the blob name
+            filenames += file.filename + "<br /> "
+        except Exception as e:
+            print(e)
+            print("Ignoring duplicate filenames") # ignore duplicate filenames
+        
+    return redirect('/') 
