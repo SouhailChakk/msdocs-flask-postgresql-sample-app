@@ -104,8 +104,6 @@
                       <input type="text" class="form-control" id="review_text" name="review_text">
                   </div>
 
-                  <a href="{{ url_for('image.html', id=restaurant.id) }}" class="btn btn-primary">Add Image</a>
-
                 
 
                   <form method="post" action="{{ url_for('add_review', id=restaurant.id) }}" enctype="multipart/form-data">
