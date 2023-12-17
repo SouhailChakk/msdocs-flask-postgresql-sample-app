@@ -106,7 +106,7 @@
 
 
                   <!-- HTML form for submitting restaurant reviews with image upload -->
-<form method="post" action="{{ url_for('add_review', id=restaurant.id) }}" enctype="multipart/form-data">
+<form method="post" action="{{ url_for('upload', id=restaurant.id) }}" enctype="multipart/form-data">
     <!-- Other review input fields -->
     <div class="mb-3">
         <label for="customer_image" class="form-label">Customer Image:</label>
