@@ -104,6 +104,16 @@
                       <input type="text" class="form-control" id="review_text" name="review_text">
                   </div>
 
+                  <!-- HTML form for submitting restaurant reviews with image upload -->
+<form method="post" action="{{ url_for('upload_blob') }}" enctype="multipart/form-data">
+    <!-- Other review input fields -->
+    <div class="mb-3">
+        <label for="customer_image" class="form-label">Customer Image:</label>
+        <input type="file" class="form-control" id="customer_image" name="customer_image" accept=".png, .jpg, .jpeg">
+    </div>
+    <button type="submit" class="btn btn-primary">Submit Image</button>
+</form>
+
 
 
                   
